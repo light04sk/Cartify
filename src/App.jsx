@@ -13,7 +13,7 @@ import ProtectedRoute from "./components/protectedRoute/ProtectedRoute";
 import OrderSuccess from "./pages/OrderSuccess";
 import Orders from "./pages/Orders";
 import Wishlist from "./pages/Wishlist";
-import NotFound from "./pages/Notfound";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
