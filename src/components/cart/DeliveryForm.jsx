@@ -7,13 +7,26 @@ const DeliveryForm = ({ fullName }) => {
   const { location, getLocation } = useLocation();
   const [phone, setPhone] = useState("");
   const [saved, setSaved] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: "",
+    address: "",
+    state: "",
+    postcode: "",
+    country: "",
+  });
 
-  // Load saved delivery info from localStorage on mount
   useEffect(() => {
     const savedInfo = localStorage.getItem("deliveryInfo");
     if (savedInfo) {
       const parsed = JSON.parse(savedInfo);
       setPhone(parsed.phone || "");
+      setFormData({
+        fullName: parsed.fullName || "",
+        address: parsed.address || "",
+        state: parsed.state || "",
+        postcode: parsed.postcode || "",
+        country: parsed.country || "",
+      });
       if (
         parsed.address &&
         parsed.state &&
@@ -26,27 +39,41 @@ const DeliveryForm = ({ fullName }) => {
     }
   }, []);
 
+  useEffect(() => {
+    if (location?.address) {
+      setFormData((prev) => ({
+        ...prev,
+        address: location.address.county || prev.address,
+        state: location.address.state || prev.state,
+        postcode: location.address.postcode || prev.postcode,
+        country: location.address.country || prev.country,
+      }));
+    }
+  }, [location]);
+
   const inputStyle =
     "p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white";
 
-  const readOnlyStyle =
-    "p-3 rounded-xl border border-gray-100 bg-gray-50 text-gray-700 cursor-default";
+  const handleChange = (field) => (e) => {
+    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+    if (saved) setSaved(false);
+  };
 
   const handleSubmit = () => {
-    if (!location?.address?.county) {
-      toast.error("Please detect your location first");
+    if (!formData.address.trim()) {
+      toast.error("Please enter or detect your address");
       return;
     }
-    if (!location?.address?.state) {
-      toast.error("State is missing — please detect location again");
+    if (!formData.state.trim()) {
+      toast.error("Please enter your state");
       return;
     }
-    if (!location?.address?.postcode) {
-      toast.error("Postcode is missing — please detect location again");
+    if (!formData.postcode.trim()) {
+      toast.error("Please enter your postcode");
       return;
     }
-    if (!location?.address?.country) {
-      toast.error("Country is missing — please detect location again");
+    if (!formData.country.trim()) {
+      toast.error("Please enter your country");
       return;
     }
     if (!phone.trim()) {
@@ -59,11 +86,11 @@ const DeliveryForm = ({ fullName }) => {
     }
 
     const deliveryInfo = {
-      fullName,
-      address: location?.address?.county,
-      state: location?.address?.state,
-      postcode: location?.address?.postcode,
-      country: location?.address?.country,
+      fullName: formData.fullName || fullName,
+      address: formData.address,
+      state: formData.state,
+      postcode: formData.postcode,
+      country: formData.country,
       phone: phone.trim(),
     };
 
@@ -75,14 +102,6 @@ const DeliveryForm = ({ fullName }) => {
   const handleEdit = () => {
     setSaved(false);
   };
-
-  const savedInfo = (() => {
-    try {
-      return JSON.parse(localStorage.getItem("deliveryInfo") || "{}");
-    } catch {
-      return {};
-    }
-  })();
 
   return (
     <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-4">
@@ -111,65 +130,63 @@ const DeliveryForm = ({ fullName }) => {
       {/* Row 1 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <input
-          className={readOnlyStyle}
+          className={inputStyle}
           placeholder="Full Name"
-          value={saved ? savedInfo.fullName || fullName : fullName}
-          readOnly
+          value={formData.fullName || fullName}
+          onChange={handleChange("fullName")}
         />
         <input
-          className={readOnlyStyle}
+          className={inputStyle}
           placeholder="Address"
-          value={
-            saved ? savedInfo.address || "" : location?.address?.county || ""
-          }
-          readOnly
+          value={formData.address}
+          onChange={handleChange("address")}
         />
       </div>
 
       {/* Row 2 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <input
-          className={readOnlyStyle}
+          className={inputStyle}
           placeholder="State"
-          value={saved ? savedInfo.state || "" : location?.address?.state || ""}
-          readOnly
+          value={formData.state}
+          onChange={handleChange("state")}
         />
         <input
-          className={readOnlyStyle}
+          className={inputStyle}
           placeholder="Postcode"
-          value={
-            saved ? savedInfo.postcode || "" : location?.address?.postcode || ""
-          }
-          readOnly
+          value={formData.postcode}
+          onChange={handleChange("postcode")}
         />
       </div>
 
       {/* Row 3 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <input
-          className={readOnlyStyle}
+          className={inputStyle}
           placeholder="Country"
-          value={
-            saved ? savedInfo.country || "" : location?.address?.country || ""
-          }
-          readOnly
+          value={formData.country}
+          onChange={handleChange("country")}
         />
-        {/* FIXED: removed readOnly, use disabled instead so mobile keyboard works */}
         <input
-          className={saved ? readOnlyStyle : inputStyle}
+          className={inputStyle}
           placeholder="Phone Number"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value.replace(/[^\d]/g, "");
+            setPhone(val);
+            if (saved) setSaved(false);
+          }}
           maxLength={15}
           type="tel"
-          disabled={saved}
+          autoComplete="tel"
         />
       </div>
 
-      {/* Submit + Detect — hidden when saved */}
+      {/* Submit + Detect */}
       {!saved && (
         <>
           <button
+            type="button"
             onClick={handleSubmit}
             className="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl w-full transition"
           >
@@ -179,6 +196,7 @@ const DeliveryForm = ({ fullName }) => {
           <div className="text-center text-gray-400">— OR —</div>
 
           <button
+            type="button"
             onClick={getLocation}
             className="bg-blue-50 text-blue-600 hover:bg-blue-100 py-2 rounded-xl w-full transition"
           >
