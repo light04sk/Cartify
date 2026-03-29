@@ -10,7 +10,8 @@ const Navbar = () => {
   const [dropDown, setDropDown] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const { cartItem } = useCart();
-  const { location, setLocation, getLocation } = useLocation();
+  const { location, setLocation, getLocation, locationError, locationLoading } =
+    useLocation();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -62,13 +63,11 @@ const Navbar = () => {
                   </div>
 
                   <button
-                    onClick={() => {
-                      getLocation();
-                      setDropDown(false);
-                    }}
-                    className="w-full text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg text-sm font-semibold"
+                    onClick={() => getLocation()} // don't close dropdown
+                    disabled={locationLoading}
+                    className="w-full text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
                   >
-                    Auto Detect
+                    {locationLoading ? "Detecting..." : "Auto Detect"}
                   </button>
 
                   <button

@@ -14,7 +14,6 @@ const DeliveryForm = ({ fullName }) => {
     if (savedInfo) {
       const parsed = JSON.parse(savedInfo);
       setPhone(parsed.phone || "");
-      // If all required fields exist in storage, show saved state
       if (
         parsed.address &&
         parsed.state &&
@@ -77,7 +76,6 @@ const DeliveryForm = ({ fullName }) => {
     setSaved(false);
   };
 
-  // Read saved info to display when in saved state
   const savedInfo = (() => {
     try {
       return JSON.parse(localStorage.getItem("deliveryInfo") || "{}");
@@ -119,7 +117,7 @@ const DeliveryForm = ({ fullName }) => {
           readOnly
         />
         <input
-          className={saved ? readOnlyStyle : inputStyle}
+          className={readOnlyStyle}
           placeholder="Address"
           value={
             saved ? savedInfo.address || "" : location?.address?.county || ""
@@ -131,13 +129,13 @@ const DeliveryForm = ({ fullName }) => {
       {/* Row 2 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <input
-          className={saved ? readOnlyStyle : inputStyle}
+          className={readOnlyStyle}
           placeholder="State"
           value={saved ? savedInfo.state || "" : location?.address?.state || ""}
           readOnly
         />
         <input
-          className={saved ? readOnlyStyle : inputStyle}
+          className={readOnlyStyle}
           placeholder="Postcode"
           value={
             saved ? savedInfo.postcode || "" : location?.address?.postcode || ""
@@ -149,21 +147,22 @@ const DeliveryForm = ({ fullName }) => {
       {/* Row 3 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <input
-          className={saved ? readOnlyStyle : inputStyle}
+          className={readOnlyStyle}
           placeholder="Country"
           value={
             saved ? savedInfo.country || "" : location?.address?.country || ""
           }
           readOnly
         />
+        {/* FIXED: removed readOnly, use disabled instead so mobile keyboard works */}
         <input
           className={saved ? readOnlyStyle : inputStyle}
           placeholder="Phone Number"
           value={phone}
-          onChange={(e) => !saved && setPhone(e.target.value)}
+          onChange={(e) => setPhone(e.target.value)}
           maxLength={15}
           type="tel"
-          readOnly={saved}
+          disabled={saved}
         />
       </div>
 
